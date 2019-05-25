@@ -5,3 +5,6 @@
 *~
 *.tar.gz
 *.tar.xz
+/.idea
+/cmake-build-*
+

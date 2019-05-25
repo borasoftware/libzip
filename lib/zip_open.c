@@ -33,6 +33,7 @@
 
 
 #include <limits.h>
+#include <pthread.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -81,6 +82,7 @@ zip_open(const char *fn, int _flags, int *zep) {
     return za;
 }
 
+static pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
 
 ZIP_EXTERN zip_t *
 zip_open_from_source(zip_source_t *src, int _flags, zip_error_t *error) {
@@ -98,10 +100,16 @@ zip_open_from_source(zip_source_t *src, int _flags, zip_error_t *error) {
     flags = (unsigned int)_flags;
 
     supported = zip_source_supports(src);
+
+	pthread_mutex_lock(&mutex);
+
     if (needed_support_read == -1) {
 	needed_support_read = zip_source_make_command_bitmap(ZIP_SOURCE_OPEN, ZIP_SOURCE_READ, ZIP_SOURCE_CLOSE, ZIP_SOURCE_SEEK, ZIP_SOURCE_TELL, ZIP_SOURCE_STAT, -1);
 	needed_support_write = zip_source_make_command_bitmap(ZIP_SOURCE_BEGIN_WRITE, ZIP_SOURCE_COMMIT_WRITE, ZIP_SOURCE_ROLLBACK_WRITE, ZIP_SOURCE_SEEK_WRITE, ZIP_SOURCE_TELL_WRITE, ZIP_SOURCE_REMOVE, -1);
     }
+
+	pthread_mutex_unlock(&mutex);
+
     if ((supported & needed_support_read) != needed_support_read) {
 	zip_error_set(error, ZIP_ER_OPNOTSUPP, 0);
 	return NULL;
